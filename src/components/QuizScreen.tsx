@@ -9,7 +9,12 @@ type Props = {
   total: number;
   isLater: boolean;
   onToggleLater: (questionId: number) => void;
-  onAnswered: (q: Question, selected: ChoiceLabel, timeSpent: number, withinTarget: boolean) => void;
+  onAnswered: (
+    q: Question,
+    selected: ChoiceLabel[],
+    timeSpent: number,
+    withinTarget: boolean
+  ) => void;
   onNext: () => void;
   onQuit: () => void;
 };
@@ -30,20 +35,21 @@ export function QuizScreen({
   onNext,
   onQuit,
 }: Props) {
-  const [selected, setSelected] = useState<ChoiceLabel | null>(null);
+  const [selected, setSelected] = useState<ChoiceLabel[]>([]);
   const [answered, setAnswered] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const startRef = useRef<number>(Date.now());
 
-  // 問題が変わったら状態リセット
+  const need = question.correctAnswers.length; // 選ぶべき個数
+  const multi = need > 1;
+
   useEffect(() => {
-    setSelected(null);
+    setSelected([]);
     setAnswered(false);
     setElapsed(0);
     startRef.current = Date.now();
   }, [question.id]);
 
-  // タイマー（回答するまで進む）
   useEffect(() => {
     if (answered) return;
     const t = setInterval(() => {
@@ -54,13 +60,29 @@ export function QuizScreen({
 
   const over = elapsed > question.targetTime;
 
+  function toggle(label: ChoiceLabel) {
+    if (answered) return;
+    if (multi) {
+      setSelected((prev) =>
+        prev.includes(label)
+          ? prev.filter((l) => l !== label)
+          : [...prev, label]
+      );
+    } else {
+      setSelected([label]);
+    }
+  }
+
   function confirm() {
-    if (selected == null || answered) return;
+    if (selected.length === 0 || answered) return;
     const timeSpent = Math.floor((Date.now() - startRef.current) / 1000);
     const withinTarget = timeSpent <= question.targetTime;
     setAnswered(true);
     onAnswered(question, selected, timeSpent, withinTarget);
   }
+
+  const correctSet = new Set(question.correctAnswers);
+  const canConfirm = multi ? selected.length === need : selected.length === 1;
 
   return (
     <div className="screen quiz">
@@ -80,12 +102,18 @@ export function QuizScreen({
         <div className="quiz__warn">⚠ 目標時間を超えました。本番なら見切る判断を。</div>
       )}
 
-      <CodeBlock code={question.code} />
+      <p className="quiz__prompt">
+        {question.prompt ??
+          "次のコードをコンパイル・実行した結果として正しいものはどれか。"}
+        {multi && <span className="quiz__multi">（{need}つ選べ）</span>}
+      </p>
+
+      {question.code && <CodeBlock code={question.code} />}
 
       <div className="choices">
         {question.choices.map((c) => {
-          const isSel = selected === c.label;
-          const isCorrect = c.label === question.correctAnswer;
+          const isSel = selected.includes(c.label);
+          const isCorrect = correctSet.has(c.label);
           let cls = "choice";
           if (answered) {
             if (isCorrect) cls += " choice--correct";
@@ -98,10 +126,12 @@ export function QuizScreen({
             <button
               key={c.label}
               className={cls}
-              onClick={() => !answered && setSelected(c.label)}
+              onClick={() => toggle(c.label)}
               disabled={answered}
             >
-              <span className="choice__label">{c.label}</span>
+              <span className={`choice__label ${multi ? "choice__label--box" : ""}`}>
+                {c.label}
+              </span>
               <span className="choice__text">{c.text}</span>
             </button>
           );
@@ -112,13 +142,15 @@ export function QuizScreen({
         <button
           className="btn btn--primary btn--full"
           onClick={confirm}
-          disabled={selected == null}
+          disabled={!canConfirm}
         >
-          回答する
+          {multi && selected.length !== need
+            ? `あと ${need - selected.length} つ選択`
+            : "回答する"}
         </button>
       ) : (
         <>
-          <ExplanationView question={question} selected={selected!} />
+          <ExplanationView question={question} selected={selected} />
           <label className="later-check">
             <input
               type="checkbox"

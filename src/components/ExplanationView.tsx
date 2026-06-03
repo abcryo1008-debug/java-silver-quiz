@@ -1,13 +1,13 @@
 import { useState } from "react";
 import type { ReactNode } from "react";
 import type { ChoiceLabel, Question } from "../types";
+import { isAnswerCorrect } from "../types";
 
 type Props = {
   question: Question;
-  selected: ChoiceLabel;
+  selected: ChoiceLabel[];
 };
 
-// 折りたたみ可能なセクション
 function Section({
   title,
   children,
@@ -35,7 +35,9 @@ function Section({
 
 export function ExplanationView({ question, selected }: Props) {
   const e = question.explanation;
-  const isCorrect = selected === question.correctAnswer;
+  const isCorrect = isAnswerCorrect(selected, question.correctAnswers);
+  const fmt = (arr: ChoiceLabel[]) =>
+    [...arr].sort().join(", ") || "（未選択）";
 
   return (
     <div className="explanation">
@@ -46,11 +48,11 @@ export function ExplanationView({ question, selected }: Props) {
       <div className="exp-answer-row">
         <div>
           <span className="exp-answer-label">あなたの回答</span>
-          <span className={isCorrect ? "tag-ok" : "tag-ng"}>{selected}</span>
+          <span className={isCorrect ? "tag-ok" : "tag-ng"}>{fmt(selected)}</span>
         </div>
         <div>
           <span className="exp-answer-label">正解</span>
-          <span className="tag-ok">{question.correctAnswer}</span>
+          <span className="tag-ok">{fmt(question.correctAnswers)}</span>
         </div>
       </div>
 
@@ -58,7 +60,7 @@ export function ExplanationView({ question, selected }: Props) {
         <p>{e.reason}</p>
       </Section>
 
-      <Section title="② 処理順序" defaultOpen>
+      <Section title="② 処理順序・考え方" defaultOpen>
         <ol className="exp-order">
           {e.executionOrder.map((step, i) => (
             <li key={i}>{step}</li>
@@ -66,7 +68,7 @@ export function ExplanationView({ question, selected }: Props) {
         </ol>
       </Section>
 
-      <Section title="③ 他の選択肢が違う理由">
+      <Section title="③ 他の選択肢について">
         <ul className="exp-others">
           {(["A", "B", "C", "D"] as ChoiceLabel[])
             .filter((l) => e.whyOthersAreWrong[l])

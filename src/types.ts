@@ -1,5 +1,5 @@
 // アプリ全体で使う型定義。
-// 問題データ(questions.ts)はこの Question 型に従って書く。
+// 問題データ(data/sets/*.ts)はこの Question 型に従って書く。
 
 export type ChoiceLabel = "A" | "B" | "C" | "D";
 
@@ -12,10 +12,13 @@ export type Question = {
   difficulty: Difficulty;
   /** 分野タグ（結果画面の分野別分析に使う。問題画面には出さない） */
   tags: string[];
-  /** 表示するJavaソースコード */
-  code: string;
+  /** 問題文（省略時は既定の文を表示）。「2つ選べ」等もここに書く */
+  prompt?: string;
+  /** 表示するJavaソースコード（コード無しの説明問題では省略可） */
+  code?: string;
   choices: { label: ChoiceLabel; text: string }[];
-  correctAnswer: ChoiceLabel;
+  /** 正解ラベル。1個なら単一選択、2個以上なら複数選択(「2つ選べ」) */
+  correctAnswers: ChoiceLabel[];
   explanation: {
     reason: string;
     executionOrder: string[];
@@ -30,7 +33,8 @@ export type Question = {
 /** 1問の解答記録 */
 export type AnswerRecord = {
   questionId: number;
-  selected: ChoiceLabel;
+  /** 選んだラベル（複数選択にも対応） */
+  selected: ChoiceLabel[];
   correct: boolean;
   /** 解答にかかった秒数 */
   timeSpent: number;
@@ -40,19 +44,12 @@ export type AnswerRecord = {
 
 /** localStorage に保存する学習履歴 */
 export type StudyHistory = {
-  /** 間違えた問題ID（重複なし） */
   wrongQuestionIds: number[];
-  /** 「あとで復習」チェックした問題ID */
   laterReviewIds: number[];
-  /** タグごとの正答数・出題数 */
   tagStats: Record<string, { correct: number; total: number }>;
-  /** 累計の解答数 */
   totalAnswered: number;
-  /** 累計の正答数 */
   totalCorrect: number;
-  /** 現在の連続正解数 */
   currentStreak: number;
-  /** 最大連続正解数 */
   bestStreak: number;
 };
 
@@ -65,3 +62,13 @@ export const emptyHistory: StudyHistory = {
   currentStreak: 0,
   bestStreak: 0,
 };
+
+/** 選んだ集合が正解集合と完全一致するか */
+export function isAnswerCorrect(
+  selected: ChoiceLabel[],
+  correct: ChoiceLabel[]
+): boolean {
+  if (selected.length !== correct.length) return false;
+  const s = new Set(selected);
+  return correct.every((c) => s.has(c));
+}

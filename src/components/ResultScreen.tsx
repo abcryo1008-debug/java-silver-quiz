@@ -96,7 +96,8 @@ export function ResultScreen({
                     {q?.tags.slice(0, 3).join(" / ")}
                   </span>
                   <span className="wrong-list__ans">
-                    あなた {r.selected} / 正解 {q?.correctAnswer}
+                    あなた {[...r.selected].sort().join(",") || "—"} / 正解{" "}
+                    {q ? [...q.correctAnswers].sort().join(",") : "?"}
                   </span>
                 </li>
               );

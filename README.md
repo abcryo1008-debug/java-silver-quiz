@@ -179,14 +179,16 @@ npm run dev
 
 ## 7. 問題を追加する方法
 
-問題データは **`src/data/questions.ts`** に分離してあります。
-ここに追記するだけで画面に反映されます（ChatGPT/Claude に作らせて貼り付けるのも簡単）。
+問題データは **`src/data/sets/set01.ts`〜`set10.ts`** に分かれています（各20問）。
+どれかを開いて配列の末尾に追記するか、新しいセットファイルを作って `src/data/questions.ts` に `import` を1行足すだけで画面に反映されます（ChatGPT/Claude に作らせて貼り付けるのも簡単）。
+
+> 💡 単一正解は `correctAnswers: ["A"]`、複数選択（2つ選べ）は `correctAnswers: ["B", "D"]` のように配列で書きます。`prompt` を省略すると既定の「次のコードを…」が表示され、説明問題などは `prompt` を明示し `code` を省略できます。
 
 ### 手順
 
-1. VSCode で `src/data/questions.ts` を開く
-2. 既存の問題（`{ id: 1, ... }`）を1つコピーする
-3. **`id` を重複しない番号に増やす**（例：11, 12, …）
+1. VSCode で例えば `src/data/sets/set10.ts` を開く
+2. 既存の問題（`{ id: 200, ... }`）を1つコピーする
+3. **`id` を重複しない番号に増やす**（例：201, 202, …）
 4. `code`（Javaソース）、`choices`（A〜D）、`correctAnswer`、`explanation` を書き換える
 5. `tags` に分野名を入れる（結果画面の分野別分析に使われる。問題画面には表示されない）
 6. `targetTime` を設定（normal:90 / long:150 / complex:210〜240 秒の目安）
@@ -211,7 +213,7 @@ npm run dev
       { label: "C", text: "選択肢C" },
       { label: "D", text: "選択肢D" },
     ],
-    correctAnswer: "A",
+    correctAnswers: ["A"], // 複数選択なら ["B", "D"] のように複数指定
     explanation: {
       reason: "正解の理由",
       executionOrder: ["処理1", "処理2", "出力: xxx"],
@@ -308,7 +310,9 @@ java-silver-quiz/
    ├─ types.ts             … Question など型定義
    ├─ styles.css           … スマホ最適化スタイル(ダーク/ライト)
    ├─ data/
-   │  └─ questions.ts      … ★問題データ（ここに追加していく）
+   │  ├─ questions.ts      … 全セットを結合するだけの集約ファイル
+   │  └─ sets/
+   │     ├─ set01.ts 〜 set10.ts … ★問題データ本体（各20問＝全200問）
    ├─ hooks/
    │  └─ useLocalStorage.ts… 履歴保存フック
    └─ components/
@@ -319,15 +323,19 @@ java-silver-quiz/
       └─ CodeBlock.tsx     … 横スクロール等幅コード表示
 ```
 
-収録問題（サンプル10問・本番より少し難しめ）：
+収録問題：**全200問**（20問×10セット・本番より少し難しめ・一部は「2つ選べ」の複数選択）
 
-1. `ArrayList.remove(int)` と `remove(Object)`
-2. `List.of()` の変更不可（実行時例外）
-3. `Arrays.asList()` の固定サイズ（set可/add不可）
-4. instanceof パターンマッチング と `&&`
-5. instanceof パターンマッチング と `||`（コンパイルエラー）
-6. static メソッド隠蔽とフィールド非override
-7. 初期化順序（static/インスタンス初期化/コンストラクタ）
-8. switch式と `yield`
-9. try-with-resources の close 順序（逆順）
-10. Stream の遅延評価（終端操作なし）
+| セット | id | テーマ |
+|--------|-----|--------|
+| set01 | 1–20 | 総合（List/初期化/static/switch/継承/例外/instanceof/record/sealed 他） |
+| set02 | 21–40 | ArrayList / List / ジェネリクス / 反復処理 |
+| set03 | 41–60 | クラス定義 / 初期化順序 / this / super / コンストラクタ |
+| set04 | 61–80 | 継承 / ポリモーフィズム / オーバーライド・ロード / キャスト |
+| set05 | 81–100 | instanceof パターンマッチング / static 深掘り |
+| set06 | 101–120 | switch文 / switch式 / enum |
+| set07 | 121–140 | アクセス修飾子 / パッケージ / インターフェース |
+| set08 | 141–160 | 例外 / try-catch-finally / try-with-resources |
+| set09 | 161–180 | String / StringBuilder / 配列 |
+| set10 | 181–200 | ラムダ式 / Stream / record / sealed / var |
+
+各問に「正解／理由／処理順序／他の選択肢／試験ポイント／見切りポイント／覚える1行／類似ひっかけ」をアプリ内の折りたたみ解説として収録。

@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import "./styles.css";
 import { questions as ALL_QUESTIONS } from "./data/questions";
 import type { AnswerRecord, ChoiceLabel, Question, StudyHistory } from "./types";
-import { emptyHistory } from "./types";
+import { emptyHistory, isAnswerCorrect } from "./types";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import { TopScreen } from "./components/TopScreen";
 import { QuizScreen } from "./components/QuizScreen";
@@ -65,11 +65,11 @@ export default function App() {
 
   function handleAnswered(
     q: Question,
-    selected: ChoiceLabel,
+    selected: ChoiceLabel[],
     timeSpent: number,
     withinTarget: boolean
   ) {
-    const correct = selected === q.correctAnswer;
+    const correct = isAnswerCorrect(selected, q.correctAnswers);
     setRecords((prev) => [
       ...prev,
       { questionId: q.id, selected, correct, timeSpent, withinTarget },
