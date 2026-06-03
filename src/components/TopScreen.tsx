@@ -2,20 +2,20 @@ import type { StudyHistory } from "../types";
 
 type Props = {
   history: StudyHistory;
-  allTags: string[];
+  categories: { label: string; tags: string[] }[];
   onStart: () => void;
   onRandom: () => void;
   onReview: () => void;
-  onTagSelect: (tag: string) => void;
+  onCategorySelect: (tags: string[]) => void;
 };
 
 export function TopScreen({
   history,
-  allTags,
+  categories,
   onStart,
   onRandom,
   onReview,
-  onTagSelect,
+  onCategorySelect,
 }: Props) {
   const rate =
     history.totalAnswered === 0
@@ -79,9 +79,13 @@ export function TopScreen({
       <div className="top__section">
         <h2 className="top__section-title">弱点分野別に学習</h2>
         <div className="tag-grid">
-          {allTags.map((tag) => (
-            <button key={tag} className="tag-btn" onClick={() => onTagSelect(tag)}>
-              {tag}
+          {categories.map((c) => (
+            <button
+              key={c.label}
+              className="tag-btn"
+              onClick={() => onCategorySelect(c.tags)}
+            >
+              {c.label}
             </button>
           ))}
         </div>

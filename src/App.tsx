@@ -10,6 +10,20 @@ import { ResultScreen } from "./components/ResultScreen";
 
 type Screen = "top" | "quiz" | "result";
 
+// 弱点分野別ボタン（10カテゴリ）。各カテゴリは関連タグをまとめて出題する。
+const CATEGORIES: { label: string; tags: string[] }[] = [
+  { label: "List・コレクション", tags: ["List", "ArrayList", "Arrays.asList", "List.of", "ジェネリクス"] },
+  { label: "instanceof・パターン", tags: ["instanceof", "パターンマッチング"] },
+  { label: "static", tags: ["static", "クラス変数", "メソッド隠蔽"] },
+  { label: "継承・多態性", tags: ["継承", "多態性", "フィールド隠蔽", "キャスト"] },
+  { label: "オーバーライド/ロード", tags: ["オーバーライド", "オーバーロード", "共変戻り値", "解決順序"] },
+  { label: "interface・abstract", tags: ["interface", "default method", "private method", "abstract class"] },
+  { label: "switch・分岐", tags: ["switch式", "switch文", "分岐", "yield"] },
+  { label: "例外", tags: ["例外", "try-with-resources", "AutoCloseable", "checked", "unchecked", "finally"] },
+  { label: "String・配列", tags: ["String", "StringBuilder", "配列", "多次元配列", "拡張for"] },
+  { label: "ラムダ/Stream/新機能", tags: ["ラムダ式", "Stream", "record", "sealed class", "enum", "var"] },
+];
+
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -31,11 +45,14 @@ export default function App() {
   );
   const [dark, setDark] = useLocalStorage<boolean>("java-silver-dark", true);
 
-  const allTags = useMemo(() => {
-    const set = new Set<string>();
-    ALL_QUESTIONS.forEach((q) => q.tags.forEach((t) => set.add(t)));
-    return [...set].sort();
-  }, []);
+  // 出題数のあるカテゴリだけ表示する
+  const categories = useMemo(
+    () =>
+      CATEGORIES.filter((c) =>
+        ALL_QUESTIONS.some((q) => q.tags.some((t) => c.tags.includes(t)))
+      ),
+    []
+  );
 
   function beginQuiz(qs: Question[]) {
     if (qs.length === 0) return;
@@ -47,8 +64,8 @@ export default function App() {
 
   const startAll = () => beginQuiz(ALL_QUESTIONS);
   const startRandom = () => beginQuiz(shuffle(ALL_QUESTIONS));
-  const startTag = (tag: string) =>
-    beginQuiz(ALL_QUESTIONS.filter((q) => q.tags.includes(tag)));
+  const startCategory = (tags: string[]) =>
+    beginQuiz(ALL_QUESTIONS.filter((q) => q.tags.some((t) => tags.includes(t))));
   const startReview = () => {
     const ids = new Set([
       ...history.wrongQuestionIds,
@@ -142,11 +159,11 @@ export default function App() {
         {screen === "top" && (
           <TopScreen
             history={history}
-            allTags={allTags}
+            categories={categories}
             onStart={startAll}
             onRandom={startRandom}
             onReview={startReview}
-            onTagSelect={startTag}
+            onCategorySelect={startCategory}
           />
         )}
 
